@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#365e50">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src 'self' https://api.github.com; img-src 'self' data:; base-uri 'none'; form-action 'self'; object-src 'none'">
+  <title>Shared Grocery List · Hearthside</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#23332d;background:#f4f3ee;--green:#365e50;--muted:#78817b;--line:#e3e8e0;--card:#fff;--shadow:0 8px 28px #263a300d}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(180deg,#eaf0e8 0,#f4f3ee 240px)}button,input{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #91b6a6;outline-offset:2px}main{width:min(720px,100%);margin:auto;padding:calc(20px + env(safe-area-inset-top)) 15px calc(32px + env(safe-area-inset-bottom))}.brand{font-size:11px;font-weight:800;letter-spacing:.15em;color:#66816f}.hero{padding:10px 4px 18px}.hero-row{display:flex;align-items:center;justify-content:space-between;gap:12px}.hero h1{font:700 clamp(30px,8vw,42px)/1.04 Georgia,serif;letter-spacing:-.04em;margin:11px 0 7px;color:#22382e}.hero p{color:var(--muted);font-size:14px;line-height:1.5;margin:0}.status-pill{font-size:11px;font-weight:750;border-radius:99px;background:#e6eee7;color:#41634d;padding:8px 11px;max-width:48%;overflow-wrap:anywhere}.status-pill.warning{background:#fff2dc;color:#825d27}.status-pill.error{background:#fff0e9;color:#8d402e}.status-pill.pending{background:#eaf0f7;color:#42617d}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:17px;margin:12px 0}.add-row{display:flex;gap:9px}.add-row input,.settings input{min-width:0;width:100%;border:1px solid #ccd8ce;border-radius:11px;background:#fff;padding:13px;color:#22382e;font-size:16px}.add-row button,.primary{border:0;border-radius:11px;background:var(--green);color:#fff;font-weight:750;padding:0 17px;min-height:48px;white-space:nowrap}.add-row button{font-size:22px}.summary{display:flex;justify-content:space-between;align-items:center;margin:15px 2px 8px;color:var(--muted);font-size:12px}.summary strong{color:#34483c}.items{list-style:none;margin:0;padding:0}.items li{display:flex;align-items:center;gap:11px;padding:13px 3px;border-bottom:1px solid #edf0eb;min-height:52px}.items li:last-child{border-bottom:0}.items input{width:22px;height:22px;accent-color:var(--green);flex:0 0 auto}.item-text{flex:1;min-width:0;overflow-wrap:anywhere;font-size:16px}.items li.done .item-text{text-decoration:line-through;color:#909b93}.remove-item{border:0;background:transparent;color:#8b948e;font-size:21px;width:36px;height:36px;border-radius:9px}.remove-item:hover{background:#f4f5f2;color:#8d473d}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.actions button,.secondary{min-height:44px;border:1px solid #dfe4dd;border-radius:10px;background:#f6f8f5;color:#365e50;font-size:13px;font-weight:750;padding:10px 14px}.actions .primary{background:var(--green);border-color:var(--green);color:#fff}.actions button:disabled{opacity:.5;cursor:not-allowed}.empty{text-align:center;color:var(--muted);font-size:14px;padding:26px 8px}.notice{min-height:21px;margin:10px 2px 0;color:#43694f;font-weight:700;font-size:12px}.notice.error{color:#8d402e}.settings{margin-top:18px}.settings summary{font-size:13px;color:#365e50;font-weight:800;cursor:pointer;list-style:none}.settings summary::-webkit-details-marker{display:none}.settings summary:after{content:"＋";float:right}.settings[open] summary:after{content:"−"}.settings p{font-size:12px;line-height:1.5;color:var(--muted);margin:12px 0}.settings label{display:block;font-size:12px;font-weight:750;margin:14px 0 6px}.settings .switch-row{display:flex;align-items:flex-start;gap:9px;font-weight:650;line-height:1.4}.settings .switch-row input{width:18px;height:18px;margin:1px 0;flex:0 0 auto;accent-color:var(--green)}.settings input[type=password]{font-size:14px}.settings .actions{margin-top:16px}.footnote{color:#87918a;font-size:11px;line-height:1.5;text-align:center;padding:10px 10px 0}.footnote strong{color:#6e766f}@media(min-width:600px){main{padding-top:36px}.card{padding:22px}.items li{padding:15px 5px}}
+  </style>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div class="brand">HEARTHSIDE FAMILY HUB</div>
+      <div class="hero-row"><div><h1>Grocery list</h1><p>Shared with your home Hub. Check things off while shopping; clear them when you’re done.</p></div><span id="syncBadge" class="status-pill">Not connected</span></div>
+    </header>
+    <section class="card" aria-label="Grocery items">
+      <form id="addForm" class="add-row"><input id="newItem" maxlength="500" autocomplete="off" placeholder="Add an item…" aria-label="New grocery item" required><button type="submit" aria-label="Add to grocery list">+</button></form>
+      <p id="notice" class="notice" role="status" aria-live="polite"></p>
+      <div class="summary"><strong id="summary">0 items</strong><span>Checked items stay visible</span></div>
+      <ul id="items" class="items"></ul>
+      <div id="empty" class="empty">No items yet. Add something above or import recipe ingredients from Family Hub.</div>
+      <div class="actions"><button id="removePurchased" class="primary" type="button" disabled>Remove purchased</button><button id="syncNow" type="button">Sync now</button></div>
+    </section>
+    <details id="settingsPanel" class="card settings">
+      <summary>Connect this phone to the shared list</summary>
+      <p>The data repository is public, so anyone can read its grocery list. To make edits, enter a fine-grained GitHub token limited to that grocery data repository. The token is never published in these files. By default it stays only in this browser session; “Remember” stores it in this browser.</p>
+      <form id="settingsForm">
+        <label for="repo">Public grocery data repository (owner/name)</label><input id="repo" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourname/family-grocery-data" required>
+        <label for="token">Fine-grained GitHub token</label><input id="token" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" placeholder="Paste token for this device">
+        <label class="switch-row"><input id="remember" type="checkbox">Remember token in this browser (more convenient; use only on a device you trust)</label>
+        <div class="actions"><button class="primary" type="submit">Save / connect</button><button id="forget" class="secondary" type="button">Forget this device’s connection</button></div>
+      </form>
+      <p>For writes, the token needs Contents read/write for only the grocery data repository. Do not reuse a token that can edit your private recipe repository. If this phone is lost, revoke the token in GitHub.</p>
+    </details>
+    <p class="footnote"><strong>Public list:</strong> anyone can read the shared grocery items. Other Family Hub data is not included. Changes sync through GitHub and may take a few seconds to appear on another device.</p>
+  </main>
+  <script src="grocery-sync.js"></script>
+  <script src="grocery-app.js"></script>
+</body>
+</html>
