@@ -3,6 +3,7 @@ const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
 const CACHE_KEY='familyHubGroceryPhoneCacheV1';
 let sections=GrocerySync.initialSections(),items=[];
+let activeTabId='groceries',activeSectionId='groceries';
 let syncBusy=false,syncPending=false,syncTimer=null,lastSyncedAt=0;
 function escapeHTML(value=''){return String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))}
 function setStatus(message,kind=''){
@@ -23,17 +24,34 @@ function readCache(){
 }
 function visibleItems(){return GrocerySync.visibleItems(items)}
 function sectionItems(sectionId){return visibleItems().filter(item=>item.sectionId===sectionId)}
+function renderTabs(shownSections){
+  const tablist=$('#appTabs'),scrollLeft=tablist.scrollLeft;
+  tablist.innerHTML=shownSections.map(section=>`<button id="tab-${escapeHTML(section.id)}" class="app-tab ${activeTabId===section.id?'active':''}" type="button" role="tab" aria-controls="listTab" aria-selected="${activeTabId===section.id}" data-tab-id="${escapeHTML(section.id)}">${escapeHTML(section.icon||'🧺')} ${escapeHTML(section.name)}</button>`).join('')
+    +`<button id="tab-settings" class="app-tab settings-tab-button ${activeTabId==='settings'?'active':''}" type="button" role="tab" aria-controls="settingsTab" aria-selected="${activeTabId==='settings'}" data-tab-id="settings">⚙ Settings</button>`;
+  tablist.scrollLeft=scrollLeft;
+  $$('#appTabs [data-tab-id]').forEach(button=>button.onclick=()=>{
+    activeTabId=button.dataset.tabId;
+    if(activeTabId!=='settings')activeSectionId=activeTabId;
+    render();
+  });
+}
 function render(){
-  const rows=visibleItems(),checked=rows.filter(item=>item.done).length;
-  $('#summary').textContent=`${rows.length} item${rows.length===1?'':'s'} · ${checked} checked`;
+  const shownSections=GrocerySync.visibleSections(sections);
+  if(!shownSections.some(section=>section.id===activeSectionId))activeSectionId='groceries';
+  if(activeTabId!=='settings')activeTabId=activeSectionId;
+  renderTabs(shownSections);
+  const showingSettings=activeTabId==='settings';
+  $('#listTab').hidden=showingSettings;
+  $('#settingsTab').hidden=!showingSettings;
+  $('#listTab').setAttribute('aria-labelledby',`tab-${escapeHTML(activeSectionId)}`);
+  const section=shownSections.find(value=>value.id===activeSectionId)||shownSections[0];
+  if(!section){$('#sections').innerHTML='<article class="card empty-section">No shopping lists are available.</article>';return}
+  const rows=visibleItems(),sectionRows=rows.filter(item=>item.sectionId===section.id),checked=rows.filter(item=>item.done).length,sectionChecked=sectionRows.filter(item=>item.done).length;
+  $('#summary').textContent=`${section.name} · ${sectionRows.length} item${sectionRows.length===1?'':'s'} · ${sectionChecked} checked`;
   $('#removePurchased').disabled=checked===0;
   $('#removePurchased').textContent=checked?`Remove purchased (${checked})`:'Remove purchased';
-  const shownSections=GrocerySync.visibleSections(sections);
-  $('#sections').innerHTML=shownSections.map(section=>{
-    const sectionRows=rows.filter(item=>item.sectionId===section.id),sectionChecked=sectionRows.filter(item=>item.done).length;
-    const removeButton=section.id==='groceries'?'':`<button class="remove-section" type="button" data-section-id="${escapeHTML(section.id)}" ${sectionRows.length?'disabled title="Remove all items before removing this list"':''}>Remove list</button>`;
-    return `<article class="card store-section" data-section-id="${escapeHTML(section.id)}"><div class="store-section-head"><div><h2>${escapeHTML(section.icon||'🧺')} ${escapeHTML(section.name)}</h2><span class="section-count">${sectionRows.filter(item=>!item.done).length} left${sectionChecked?` · ${sectionChecked} checked`:''}</span></div>${removeButton}</div>${section.id==='groceries'?'<p class="section-note">Recipe ingredients from Family Hub are added here.</p>':''}<form class="add-row section-add" data-section-id="${escapeHTML(section.id)}"><input maxlength="500" autocomplete="off" placeholder="Add to ${escapeHTML(section.name)}…" aria-label="New item for ${escapeHTML(section.name)}" required><button type="submit" aria-label="Add item to ${escapeHTML(section.name)}">+</button></form><ul class="items">${sectionRows.map(item=>`<li class="${item.done?'done':''}"><input type="checkbox" data-id="${escapeHTML(item.id)}" aria-label="Mark ${escapeHTML(item.text)} ${item.done?'not purchased':'purchased'}" ${item.done?'checked':''}><span class="item-text">${escapeHTML(item.text)}</span><button class="remove-item" type="button" data-id="${escapeHTML(item.id)}" aria-label="Remove ${escapeHTML(item.text)}">×</button></li>`).join('')}</ul>${sectionRows.length?'':`<p class="empty-section">Nothing in ${escapeHTML(section.name)} yet.</p>`}</article>`;
-  }).join('');
+  const removeButton=section.id==='groceries'?'':`<button class="remove-section" type="button" data-section-id="${escapeHTML(section.id)}" ${sectionRows.length?'disabled title="Remove all items before removing this list"':''}>Remove list</button>`;
+  $('#sections').innerHTML=`<article class="card store-section" data-section-id="${escapeHTML(section.id)}"><div class="store-section-head"><div><h2>${escapeHTML(section.icon||'🧺')} ${escapeHTML(section.name)}</h2><span class="section-count">${sectionRows.filter(item=>!item.done).length} left${sectionChecked?` · ${sectionChecked} checked`:''}</span></div>${removeButton}</div>${section.id==='groceries'?'<p class="section-note">Recipe ingredients from Family Hub are added here.</p>':''}<form class="add-row section-add" data-section-id="${escapeHTML(section.id)}"><input maxlength="500" autocomplete="off" placeholder="Add to ${escapeHTML(section.name)}…" aria-label="New item for ${escapeHTML(section.name)}" required><button type="submit" aria-label="Add item to ${escapeHTML(section.name)}">+</button></form><ul class="items">${sectionRows.map(item=>`<li class="${item.done?'done':''}"><input type="checkbox" data-id="${escapeHTML(item.id)}" aria-label="Mark ${escapeHTML(item.text)} ${item.done?'not purchased':'purchased'}" ${item.done?'checked':''}><span class="item-text">${escapeHTML(item.text)}</span><button class="remove-item" type="button" data-id="${escapeHTML(item.id)}" aria-label="Remove ${escapeHTML(item.text)}">×</button></li>`).join('')}</ul>${sectionRows.length?'':`<p class="empty-section">Nothing in ${escapeHTML(section.name)} yet.</p>`}</article>`;
   $$('#sections input[type=checkbox]').forEach(input=>input.onchange=()=>{
     const index=items.findIndex(item=>item.id===input.dataset.id&&!GrocerySync.isDeleted(item));
     if(index<0)return;
@@ -49,7 +67,7 @@ function render(){
     if(!text)return;
     if(text.length>500){setNotice('Item names must be 500 characters or fewer.',true);return}
     const key=text.replace(/\s+/g,' ').toLocaleLowerCase();
-    if(sectionItems(sectionId).some(item=>item.text.replace(/\s+/g,' ').toLocaleLowerCase()===key)){setNotice(`That item is already in ${GrocerySync.visibleSections(sections).find(section=>section.id===sectionId)?.name||'this list'}.`);return}
+    if(sectionItems(sectionId).some(item=>item.text.replace(/\s+/g,' ').toLocaleLowerCase()===key)){setNotice(`That item is already in ${GrocerySync.visibleSections(sections).find(value=>value.id===sectionId)?.name||'this list'}.`);return}
     items=GrocerySync.mergeItems([...items,GrocerySync.createItem(text,sectionId)],[]);saveCache();input.value='';render();setNotice('Added on this phone. Syncing…');scheduleSync(100);
   });
   $$('#sections .remove-section').forEach(button=>button.onclick=()=>removeSection(button.dataset.sectionId));
@@ -90,7 +108,7 @@ function removePurchased(){
 }
 function addSection(name){
   const section=GrocerySync.createSection(name,sections);
-  sections=GrocerySync.mergeSections(sections,[section]);saveCache();render();setNotice(`${section.name} list added. Syncing…`);scheduleSync(100);
+  sections=GrocerySync.mergeSections(sections,[section]);activeSectionId=section.id;activeTabId=section.id;saveCache();render();setNotice(`${section.name} list added. Syncing…`);scheduleSync(100);
 }
 function removeSection(sectionId){
   const section=GrocerySync.visibleSections(sections).find(value=>value.id===sectionId);
@@ -98,7 +116,7 @@ function removeSection(sectionId){
   if(section.id==='groceries'){setNotice('Groceries is the recipe-import list and cannot be removed.',true);return}
   if(sectionItems(sectionId).length){setNotice('Remove all items before removing this list.',true);return}
   if(!confirm(`Remove the empty “${section.name}” list from both devices?`))return;
-  sections=GrocerySync.mergeSections(sections,[GrocerySync.deleteSection(section)]);saveCache();render();setNotice(`${section.name} list removed. Syncing…`);scheduleSync(100);
+  sections=GrocerySync.mergeSections(sections,[GrocerySync.deleteSection(section)]);if(activeSectionId===sectionId){activeSectionId='groceries';activeTabId='groceries'}saveCache();render();setNotice(`${section.name} list removed. Syncing…`);scheduleSync(100);
 }
 $('#sectionForm').onsubmit=event=>{
   event.preventDefault();const input=$('#newSection'),name=input.value.trim();
@@ -114,17 +132,17 @@ $('#settingsForm').onsubmit=async event=>{
     if(token)GrocerySync.setToken(token,remember);
     else if(GrocerySync.tokenIsRemembered()&&!remember)GrocerySync.clearToken();
     else if(remember&&!GrocerySync.tokenIsRemembered()&&GrocerySync.hasToken())GrocerySync.setToken(GrocerySync.getToken(),true);
-    $('#token').value='';$('#settingsPanel').open=false;lastSyncedAt=0;await sync(true,true);
+    $('#token').value='';lastSyncedAt=0;await sync(true,true);activeTabId=activeSectionId;render();
   }catch(error){$('#token').value='';setStatus('Setup issue','error');setNotice(error.message||'Could not save these settings.',true)}
 };
 $('#forget').onclick=()=>{
   if(!confirm('Forget the repository and token on this phone? The local lists and public GitHub file will not be deleted.'))return;
-  GrocerySync.clearConnection();$('#repo').value='';$('#token').value='';$('#remember').checked=false;$('#settingsPanel').open=true;setStatus('Not connected','warning');setNotice('Connection forgotten on this phone. Your local lists are still here.');
+  GrocerySync.clearConnection();$('#repo').value='';$('#token').value='';$('#remember').checked=false;activeTabId='settings';render();setStatus('Not connected','warning');setNotice('Connection forgotten on this phone. Your local lists are still here.');
 };
 const settings=GrocerySync.getSettings();
 $('#repo').value=settings.repo;$('#remember').checked=GrocerySync.tokenIsRemembered();
 const cache=readCache();sections=cache.sections;items=cache.items;render();
-if(settings.repo)sync(false,true);else{setStatus('Set up to connect','warning');setNotice('Add your public grocery data repository below. The shared shopping lists will then load from GitHub.')}
+if(settings.repo)sync(false,true);else{setStatus('Set up to connect','warning');setNotice('Open Settings to connect this phone to your public Grocery data repository.')}
 setInterval(()=>{if(!document.hidden&&GrocerySync.getSettings().repo)sync(false)},20000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&GrocerySync.getSettings().repo)sync(false)});
 window.addEventListener('focus',()=>{if(GrocerySync.getSettings().repo)sync(false)});

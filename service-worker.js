@@ -1,5 +1,5 @@
 'use strict';
-const CACHE_NAME = 'hearthside-grocery-shell-v2';
+const CACHE_NAME = 'hearthside-grocery-shell-v3';
 const SHELL_FILES = [
   './',
   './index.html',
