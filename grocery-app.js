@@ -25,15 +25,25 @@ function readCache(){
 function visibleItems(){return GrocerySync.visibleItems(items)}
 function sectionItems(sectionId){return visibleItems().filter(item=>item.sectionId===sectionId)}
 function renderTabs(shownSections){
-  const tablist=$('#appTabs'),scrollLeft=tablist.scrollLeft;
-  tablist.innerHTML=shownSections.map(section=>`<button id="tab-${escapeHTML(section.id)}" class="app-tab ${activeTabId===section.id?'active':''}" type="button" role="tab" aria-controls="listTab" aria-selected="${activeTabId===section.id}" data-tab-id="${escapeHTML(section.id)}">${escapeHTML(section.icon||'🧺')} ${escapeHTML(section.name)}</button>`).join('')
-    +`<button id="tab-settings" class="app-tab settings-tab-button ${activeTabId==='settings'?'active':''}" type="button" role="tab" aria-controls="settingsTab" aria-selected="${activeTabId==='settings'}" data-tab-id="settings">⚙ Settings</button>`;
+  const tablist=$('#listTabs'),scrollLeft=tablist.scrollLeft;
+  tablist.innerHTML=shownSections.map(section=>`<button id="tab-${escapeHTML(section.id)}" class="app-tab ${activeTabId===section.id?'active':''}" type="button" role="tab" aria-controls="listTab" aria-selected="${activeTabId===section.id}" data-tab-id="${escapeHTML(section.id)}"><span class="tab-icon" aria-hidden="true">${escapeHTML(section.icon||'🧺')}</span><span class="tab-label">${escapeHTML(section.name)}</span></button>`).join('');
   tablist.scrollLeft=scrollLeft;
+  const settingsButton=$('#tab-settings');
+  settingsButton.classList.toggle('active',activeTabId==='settings');
+  settingsButton.setAttribute('aria-selected',String(activeTabId==='settings'));
   $$('#appTabs [data-tab-id]').forEach(button=>button.onclick=()=>{
     activeTabId=button.dataset.tabId;
     if(activeTabId!=='settings')activeSectionId=activeTabId;
     render();
   });
+  const selected=tablist.querySelector('[aria-selected="true"]');
+  if(selected){
+    const viewport=tablist.getBoundingClientRect(),tab=selected.getBoundingClientRect();
+    if(tab.width&&viewport.width){
+      if(tab.left<viewport.left)tablist.scrollLeft-=viewport.left-tab.left;
+      else if(tab.right>viewport.right)tablist.scrollLeft+=tab.right-viewport.right;
+    }
+  }
 }
 function render(){
   const shownSections=GrocerySync.visibleSections(sections);
@@ -163,5 +173,5 @@ installButton.onclick=async()=>{
 };
 window.addEventListener('appinstalled',()=>{installButton.hidden=true;setNotice('Hearthside Grocery is installed on this phone.')});
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
-  navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).catch(()=>{});
+  navigator.serviceWorker.register('./service-worker.js?v=4',{scope:'./'}).catch(()=>{});
 }
