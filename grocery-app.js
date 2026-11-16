@@ -103,3 +103,22 @@ if(settings.repo)sync(false,true);else{setStatus('Set up to connect','warning');
 setInterval(()=>{if(!document.hidden&&GrocerySync.getSettings().repo)sync(false)},20000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&GrocerySync.getSettings().repo)sync(false)});
 window.addEventListener('focus',()=>{if(GrocerySync.getSettings().repo)sync(false)});
+let deferredInstallPrompt=null;
+const installButton=$('#installApp');
+window.addEventListener('beforeinstallprompt',event=>{
+  event.preventDefault();deferredInstallPrompt=event;installButton.hidden=false;
+});
+installButton.onclick=async()=>{
+  if(!deferredInstallPrompt)return;
+  const promptEvent=deferredInstallPrompt;deferredInstallPrompt=null;installButton.disabled=true;
+  try{
+    await promptEvent.prompt();
+    const choice=await promptEvent.userChoice;
+    setNotice(choice&&choice.outcome==='accepted'?'Installing Hearthside Grocery…':'Install dismissed.');
+  }catch(_){setNotice('Use Chrome’s menu and choose Install app.',true)}
+  finally{installButton.disabled=false;installButton.hidden=true}
+};
+window.addEventListener('appinstalled',()=>{installButton.hidden=true;setNotice('Hearthside Grocery is installed on this phone.')});
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).catch(()=>{});
+}
