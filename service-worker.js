@@ -1,10 +1,10 @@
 'use strict';
-const CACHE_NAME = 'hearthside-grocery-shell-v4';
+const CACHE_NAME = 'hearthside-grocery-shell-v5';
 const SHELL_FILES = [
   './',
   './index.html',
-  './grocery-sync.js?v=4',
-  './grocery-app.js?v=4',
+  './grocery-sync.js?v=5',
+  './grocery-app.js?v=5',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'
