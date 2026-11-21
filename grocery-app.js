@@ -208,5 +208,5 @@ installButton.onclick=async()=>{
 };
 window.addEventListener('appinstalled',()=>{installButton.hidden=true;setNotice('Hearthside Grocery is installed on this phone.')});
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
-  navigator.serviceWorker.register('./service-worker.js?v=7',{scope:'./'}).catch(()=>{});
+  navigator.serviceWorker.register('./service-worker.js?v=8',{scope:'./'}).catch(()=>{});
 }

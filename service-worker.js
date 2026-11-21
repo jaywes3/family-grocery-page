@@ -1,13 +1,13 @@
 'use strict';
-const CACHE_NAME = 'hearthside-grocery-shell-v7';
+const CACHE_NAME = 'hearthside-grocery-shell-v8';
 const SHELL_FILES = [
   './',
   './index.html',
-  './grocery-sync.js?v=7',
-  './grocery-app.js?v=7',
+  './grocery-sync.js?v=8',
+  './grocery-app.js?v=8',
   './manifest.webmanifest',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/icon-192.png?v=8',
+  './icons/icon-512.png?v=8'
 ];
 
 self.addEventListener('install', event => {
